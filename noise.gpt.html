@@ -72,7 +72,7 @@
             oscillator.start();
 
             // Random burst duration: 0.3s to 1.2s
-            const duration = 0.3 + Math.random() * 0.9;
+            const duration = 0.3 + Math.random() * 0.15;
             oscillator.stop(audioCtx.currentTime + duration);
 
             logMessage(`Sound played: ${waveform}, ${Math.round(freq)} Hz, ${duration.toFixed(2)}s`);
@@ -85,7 +85,7 @@
                 playIrritatingSound();
 
                 // Next sound in 10–120 seconds
-                const nextDelay = 10000 + Math.random() * 110000;
+                const nextDelay = 1000 + Math.random() * 11000;
                 logMessage(`Next sound in ${(nextDelay / 1000).toFixed(1)} seconds`);
                 
                 setTimeout(loop, nextDelay);
