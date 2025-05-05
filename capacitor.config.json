@@ -1,0 +1,13 @@
+{
+    "appId": "com.thilac.noisegenerator",
+    "appName": "Noise Generator",
+    "webDir": "./",
+    "bundledWebRuntime": false,
+    "ios": {
+      "scheme": "NoiseGenerator",
+      "backgroundColor": "#2c2c2e"
+    },
+    "android": {
+      "backgroundColor": "#2c2c2e"
+    }
+  }
