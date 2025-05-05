@@ -8,11 +8,11 @@
     <meta name="theme-color" content="#2c2c2e">
     <meta name="apple-mobile-web-app-title" content="Noise Generator">
     <meta name="application-name" content="Noise Generator">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <title>Noise Generator</title>
-    <link rel="apple-touch-icon" href="icon.png">
-    <link rel="manifest" href="manifest.json">
-    <link rel="icon" href="icon-192.png">
     <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="icon" href="icon-192.png">
+    <link rel="manifest" href="manifest.json">
     <style>
         :root {
             --glass-bg: rgba(255, 255, 255, 0.15);
@@ -50,6 +50,13 @@
             background-image: 
                 radial-gradient(at 47% 33%, hsl(240, 27%, 20%) 0, transparent 59%), 
                 radial-gradient(at 82% 65%, hsl(0, 0%, 15%) 0, transparent 55%);
+        }
+
+        body.timer-active {
+            overflow: hidden;
+            position: fixed;
+            height: 100%;
+            width: 100%;
         }
         
         @supports (padding: max(0px)) {
@@ -155,6 +162,7 @@
             position: relative;
             scroll-snap-type: y mandatory;
             -webkit-overflow-scrolling: touch;
+            touch-action: pan-y;
         }
         
         .time-wheel {
@@ -367,6 +375,7 @@
         let totalDuration = 0;
         let nextSoundTime = 0;
         let soundTimeout;
+        let isInteractingWithTimer = false;
         
         // Volume and frequency values (0-1)
         let volume = 0.5;
@@ -420,36 +429,49 @@
                 highlightSelectedOption(secondsColumn, secondsWheel);
             });
             
-            // Initialize momentum scrolling for Safari
-            initMomentumScrolling(minutesColumn);
-            initMomentumScrolling(secondsColumn);
+            // Touch event handlers for iOS
+            minutesColumn.addEventListener('touchstart', handleTouchStart, { passive: false });
+            minutesColumn.addEventListener('touchmove', handleTouchMove, { passive: false });
+            minutesColumn.addEventListener('touchend', handleTouchEnd);
+            
+            secondsColumn.addEventListener('touchstart', handleTouchStart, { passive: false });
+            secondsColumn.addEventListener('touchmove', handleTouchMove, { passive: false });
+            secondsColumn.addEventListener('touchend', handleTouchEnd);
+            
+            // Prevent page scroll when touching timer elements
+            document.querySelectorAll('.time-column, .time-wheel, .time-option').forEach(element => {
+                element.addEventListener('touchstart', function(e) {
+                    if (e.target.closest('.time-picker')) {
+                        e.stopPropagation();
+                    }
+                }, { passive: false });
+            });
         }
         
-        function initMomentumScrolling(element) {
-            let isScrolling = false;
-            let startY = 0;
-            let scrollY = 0;
-            
-            element.addEventListener('touchstart', (e) => {
-                isScrolling = true;
-                startY = e.touches[0].pageY;
-                scrollY = element.scrollTop;
-                element.style.scrollSnapType = 'none';
-            }, { passive: true });
-            
-            element.addEventListener('touchmove', (e) => {
-                if (!isScrolling) return;
-                const y = e.touches[0].pageY;
-                const deltaY = startY - y;
-                element.scrollTop = scrollY + deltaY;
-            }, { passive: true });
-            
-            element.addEventListener('touchend', () => {
-                isScrolling = false;
-                element.style.scrollSnapType = 'y mandatory';
-                snapToNearestOption(element);
-            }, { passive: true });
+        function handleTouchStart(e) {
+            isInteractingWithTimer = true;
+            document.body.classList.add('timer-active');
+            e.stopPropagation();
         }
+        
+        function handleTouchMove(e) {
+            if (isInteractingWithTimer) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        }
+        
+        function handleTouchEnd() {
+            isInteractingWithTimer = false;
+            document.body.classList.remove('timer-active');
+        }
+        
+        // Lock body scroll during interaction
+        document.addEventListener('touchmove', function(e) {
+            if (isInteractingWithTimer && e.target.closest('.time-picker')) {
+                e.preventDefault();
+            }
+        }, { passive: false });
         
         function scrollToOption(column, value) {
             const options = column.querySelectorAll('.time-option');
@@ -458,30 +480,6 @@
             );
             if (option) {
                 option.scrollIntoView({ block: 'center', behavior: 'smooth' });
-            }
-        }
-        
-        function snapToNearestOption(column) {
-            const options = column.querySelectorAll('.time-option');
-            const columnRect = column.getBoundingClientRect();
-            const columnCenter = columnRect.top + columnRect.height / 2;
-            
-            let closestOption = null;
-            let smallestDistance = Infinity;
-            
-            options.forEach(option => {
-                const optionRect = option.getBoundingClientRect();
-                const optionCenter = optionRect.top + optionRect.height / 2;
-                const distance = Math.abs(optionCenter - columnCenter);
-                
-                if (distance < smallestDistance) {
-                    smallestDistance = distance;
-                    closestOption = option;
-                }
-            });
-            
-            if (closestOption) {
-                closestOption.scrollIntoView({ block: 'center', behavior: 'smooth' });
             }
         }
         
