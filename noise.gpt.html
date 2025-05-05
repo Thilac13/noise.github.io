@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Auditory Sensory Disruption</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #111;
+            color: #eee;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+        button {
+            background: #e63946;
+            border: none;
+            color: white;
+            padding: 1em 2em;
+            font-size: 1.2em;
+            cursor: pointer;
+            border-radius: 8px;
+            margin-top: 1em;
+        }
+        #log {
+            margin-top: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+            width: 80%;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Auditory Sensory Disruption Tool</h1>
+    <p>Click the button below to start random, irregular, irritating sounds for sensory deprivation simulation.</p>
+    <button onclick="startRandomNoiseLoop()">Start Sound Loop</button>
+    <div id="log"></div>
+
+    <script>
+        function logMessage(msg) {
+            const log = document.getElementById('log');
+            const time = new Date().toLocaleTimeString();
+            log.innerHTML += `[${time}] ${msg}<br>`;
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function playIrritatingSound() {
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+
+            // Random high frequency between 3000–6000 Hz
+            const freq = 3000 + Math.random() * 3000;
+            oscillator.frequency.value = freq;
+
+            // Random waveform type
+            const waveforms = ['square', 'sawtooth', 'triangle'];
+            const waveform = waveforms[Math.floor(Math.random() * waveforms.length)];
+            oscillator.type = waveform;
+
+            // Volume for irritation (around 70–80 dB estimate)
+            gainNode.gain.value = 0.5;
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            oscillator.start();
+
+            // Random burst duration: 0.3s to 1.2s
+            const duration = 0.3 + Math.random() * 0.9;
+            oscillator.stop(audioCtx.currentTime + duration);
+
+            logMessage(`Sound played: ${waveform}, ${Math.round(freq)} Hz, ${duration.toFixed(2)}s`);
+        }
+
+        function startRandomNoiseLoop() {
+            logMessage("Started noise loop.");
+
+            function loop() {
+                playIrritatingSound();
+
+                // Next sound in 10–120 seconds
+                const nextDelay = 10000 + Math.random() * 110000;
+                logMessage(`Next sound in ${(nextDelay / 1000).toFixed(1)} seconds`);
+                
+                setTimeout(loop, nextDelay);
+            }
+
+            loop();
+        }
+    </script>
+
+</body>
+</html>
