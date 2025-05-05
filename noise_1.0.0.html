@@ -33,6 +33,11 @@
             background-image: 
                 radial-gradient(at 47% 33%, hsl(240, 27%, 20%) 0, transparent 59%), 
                 radial-gradient(at 82% 65%, hsl(0, 0%, 15%) 0, transparent 55%);
+            /* Prevent bouncing on iOS */
+            overflow: hidden;
+            height: 100%;
+            position: fixed;
+            width: 100%;
         }
         
         .glass-panel {
@@ -46,6 +51,8 @@
             width: 90%;
             max-width: 400px;
             margin: 20px auto;
+            /* Fix for iOS centering */
+            transform: translateZ(0);
         }
         
         .container {
@@ -314,14 +321,6 @@
                         </div>
                         <input type="range" min="0" max="100" value="50" class="slider" id="volume-slider">
                     </div>
-                    
-                    <div class="slider-container">
-                        <div class="slider-label">
-                            <span>Frequency</span>
-                            <span id="frequency-value">Medium</span>
-                        </div>
-                        <input type="range" min="0" max="100" value="50" class="slider" id="frequency-slider">
-                    </div>
                 </div>
                 
                 <button class="button stop" id="stop-btn">Stop</button>
@@ -341,9 +340,8 @@
         let nextSoundTime = 0;
         let soundTimeout;
         
-        // Volume and frequency values (0-1)
+        // Volume value (0-1)
         let volume = 0.5;
-        let frequency = 0.5;
         
         // DOM Elements
         const minutesWheel = document.getElementById('minutes-wheel');
@@ -356,9 +354,7 @@
         const setupScreen = document.getElementById('setup-screen');
         const timerScreen = document.getElementById('timer-screen');
         const volumeSlider = document.getElementById('volume-slider');
-        const frequencySlider = document.getElementById('frequency-slider');
         const volumeValue = document.getElementById('volume-value');
-        const frequencyValue = document.getElementById('frequency-value');
         
         // Initialize time picker with 0-30 minute range
         function initTimePicker() {
@@ -486,14 +482,11 @@
             volumeSlider.addEventListener('input', () => {
                 volume = volumeSlider.value / 100;
                 volumeValue.textContent = `${volumeSlider.value}%`;
-            });
-            
-            frequencySlider.addEventListener('input', () => {
-                frequency = frequencySlider.value / 100;
-                const frequencyText = 
-                    frequency < 0.33 ? 'Low' : 
-                    frequency < 0.66 ? 'Medium' : 'High';
-                frequencyValue.textContent = frequencyText;
+                
+                // Update volume immediately if noise is playing
+                if (gainNode) {
+                    gainNode.gain.value = volume * 0.7;
+                }
             });
         }
         
@@ -521,7 +514,9 @@
                 }
             }, 1000);
             
-            scheduleNextSound();
+            // Start playing noise immediately
+            isPlaying = true;
+            playNoise(5 + Math.random() * 10); // Random duration between 5-15 seconds
         }
         
         function stopTimer() {
@@ -642,8 +637,12 @@
             noiseNode.stop(audioContext.currentTime + duration);
             
             noiseNode.onended = () => {
-                if (isPlaying) {
-                    scheduleNextSound();
+                if (isPlaying && remainingTime > 0) {
+                    // Schedule next noise with random delay between 5-15 seconds
+                    const delay = 5 + Math.random() * 10;
+                    soundTimeout = setTimeout(() => {
+                        playNoise(5 + Math.random() * 10);
+                    }, delay * 1000);
                 }
             };
         }
@@ -657,27 +656,6 @@
                 gainNode.gain.value = 0;
             }
             isPlaying = false;
-        }
-        
-        function scheduleNextSound() {
-            if (!isPlaying) return;
-            
-            // Calculate next sound time based on frequency setting
-            // Max delay: 30 minutes (1800 seconds)
-            const minInterval = 5; // 5 seconds minimum
-            const maxInterval = 30; // 30 minutes maximum
-            const interval = minInterval + (1 - frequency) * (maxInterval - minInterval);
-            
-            // Random delay within the calculated interval
-            const delay = Math.random() * interval;
-            
-            soundTimeout = setTimeout(() => {
-                if (isPlaying && remainingTime > 0) {
-                    // Random duration between 5-15 seconds
-                    const duration = 5 + Math.random() * 10;
-                    playNoise(duration);
-                }
-            }, delay * 1000);
         }
         
         // Event listeners
@@ -695,7 +673,6 @@
             timerScreen.classList.remove('hidden');
             
             // Start timer immediately with accurate duration
-            isPlaying = true;
             startTimer();
         });
         
