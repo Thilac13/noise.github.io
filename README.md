@@ -12,11 +12,11 @@ A sleek, minimalist timer interface designed for ambient noise generation or tim
 ## 🌐 Live Demo
 
 Access the app here:  
-👉 **https://thilac13.github.io/noise.github.io/noise0.1.2_scrollbar_fully_hidden.html**
+👉 **https://thilac13.github.io/noise.github.io/noise_1.0.0.html**
 
 ## 📲 How to Use on iPhone
 
-1. Open the [live page](https://thilac13.github.io/noise.github.io/noise0.1.2_scrollbar_fully_hidden.html) in Safari.
+1. Open the [live page](https://thilac13.github.io/noise.github.io/noise_1.0.0.html) in Safari.
 2. Tap the **Share** button.
 3. Select **Add to Home Screen**.
 4. Launch the app from your home screen like any native app.
